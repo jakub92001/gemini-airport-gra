@@ -146,7 +146,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
     - 'moneyPerDay' is the daily cash flow delta. Positive for income (like an airline), negative for cost (like a premium catering service).
     - 'reputationEffect' is a one-time change to reputation upon signing.
     - 'cancellationPenalty' is a one-time reputation hit if the contract is cancelled early.
-    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${locationName}.
+    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${locationName!}.
     - Ensure 'type' is one of the three specified values: "Airline", "Catering", "Fuel".
     - Generate a mix of contract types.
 
@@ -208,7 +208,7 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
     const prompt = `
     You are a flight schedule coordinator for an airport management simulator. Based on the airport's capacity and contracted airlines, create a flight schedule for the next 24 hours.
     
-    Airport Location: ${locationName}
+    Airport Location: ${locationName!}
     Contracted Airlines:
     - ${airlineNames.join(', ')}
 
@@ -216,8 +216,8 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
     - Generate a list of exactly ${flightCount} flights.
     - The output MUST be a JSON array of flight objects with this exact structure: { "flightNumber": string, "airline": string, "type": "Arrival" | "Departure", "scheduledTime": "HH:MM", "origin": string | null, "destination": string | null }.
     - Use ONLY the airlines from the provided list.
-    - For Arrivals, the 'destination' must be '${locationName}' and 'origin' should be a realistic city for that airline to fly from.
-    - For Departures, the 'origin' must be '${locationName}' and 'destination' should be a realistic city for that airline to fly to.
+    - For Arrivals, the 'destination' must be '${locationName!}' and 'origin' should be a realistic city for that airline to fly from.
+    - For Departures, the 'origin' must be '${locationName!}' and 'destination' should be a realistic city for that airline to fly to.
     - Flight numbers should be plausible for the airline (e.g., "GA 123" for Generic Air).
     - Distribute flights throughout a 24-hour period (00:00 to 23:59), with some clustering during morning (06:00-09:00) and evening (17:00-20:00) peak hours.
     - Ensure a mix of Arrivals and Departures.
