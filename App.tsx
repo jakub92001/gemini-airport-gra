@@ -1,7 +1,9 @@
 
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { AirportState, UpgradeType, Contract, ContractType, Flight, VehicleType, Location, SaveData, VehicleStatus } from './types';
 import { INITIAL_AIRPORT_STATE, GAME_NAME, UPGRADE_COSTS, VEHICLE_COSTS, LOCATIONS } from './constants';
 import { generateContracts, generateFlightsForDay, fetchWeather } from './services/geminiService';
@@ -14,7 +16,6 @@ import FlightBoard from './components/FlightBoard';
 import LocationSelector from './components/LocationSelector';
 import FleetPanel from './components/FleetPanel';
 import { supabase } from './supabase';
-import { Session } from '@supabase/supabase-js';
 import Auth from './components/Auth';
 
 
@@ -59,7 +60,7 @@ const App: React.FC = () => {
       }
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
           // Reset game if user logs out
@@ -71,7 +72,7 @@ const App: React.FC = () => {
     });
 
     return () => {
-      authListener.subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
