@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
