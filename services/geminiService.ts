@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
 import { WMO_WEATHER_MAP } from "../constants";
@@ -14,7 +12,7 @@ function getApiKey(): string | null {
     // Check for Deno environment (used in Supabase Edge Functions)
     if (typeof Deno !== 'undefined' && Deno.env && typeof Deno.env.get === 'function') {
       apiKey = Deno.env.get("API_KEY");
-    } 
+    }
     // Check for Vite/browser environment
     else if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
       apiKey = (import.meta as any).env.VITE_API_KEY;
@@ -52,43 +50,43 @@ if (apiKey) {
 const MAX_RETRIES = 3;
 
 function parseJsonFromText(text: string): any {
-  let jsonStr = text.trim();
-  
-  // Try to find JSON block within markdown fences
-  const fenceRegex = /^```(?:json)?\s*\n(.*?)\n\s*```$/s;
-  const fenceMatch = jsonStr.match(fenceRegex);
-  if (fenceMatch && fenceMatch[1]) {
-    jsonStr = fenceMatch[1].trim();
-  }
+    let jsonStr = text.trim();
 
-  // If no fences, try to find the start and end of a JSON object/array
-  if (!jsonStr.startsWith('[') && !jsonStr.startsWith('{')) {
-      const firstBracket = jsonStr.indexOf('[');
-      const firstBrace = jsonStr.indexOf('{');
-      
-      let start = -1;
-      if (firstBracket === -1) start = firstBrace;
-      else if (firstBrace === -1) start = firstBracket;
-      else start = Math.min(firstBracket, firstBrace);
-      
-      if (start !== -1) {
-          const lastBracket = jsonStr.lastIndexOf(']');
-          const lastBrace = jsonStr.lastIndexOf('}');
-          const end = Math.max(lastBracket, lastBrace);
+    // Try to find JSON block within markdown fences
+    const fenceRegex = /^```(?:json)?\s*\n(.*?)\n\s*```$/s;
+    const fenceMatch = jsonStr.match(fenceRegex);
+    if (fenceMatch && fenceMatch[1]) {
+      jsonStr = fenceMatch[1].trim();
+    }
 
-          if (end > start) {
-              jsonStr = jsonStr.substring(start, end + 1);
-          }
-      }
-  }
+    // If no fences, try to find the start and end of a JSON object/array
+    if (!jsonStr.startsWith('[') && !jsonStr.startsWith('{')) {
+        const firstBracket = jsonStr.indexOf('[');
+        const firstBrace = jsonStr.indexOf('{');
 
-  try {
-    return JSON.parse(jsonStr);
-  } catch (e) {
-    console.error("Błąd parsowania odpowiedzi JSON:", e);
-    console.error("Oryginalny tekst:", text);
-    throw new Error("Otrzymano niepoprawnie sformatowany JSON z API.");
-  }
+        let start = -1;
+        if (firstBracket === -1) start = firstBrace;
+        else if (firstBrace === -1) start = firstBracket;
+        else start = Math.min(firstBracket, firstBrace);
+
+        if (start !== -1) {
+            const lastBracket = jsonStr.lastIndexOf(']');
+            const lastBrace = jsonStr.lastIndexOf('}');
+            const end = Math.max(lastBracket, lastBrace);
+
+            if (end > start) {
+                jsonStr = jsonStr.substring(start, end + 1);
+            }
+        }
+    }
+
+    try {
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Błąd parsowania odpowiedzi JSON:", e);
+      console.error("Oryginalny tekst:", text);
+      throw new Error("Otrzymano niepoprawnie sformatowany JSON z API.");
+    }
 }
 
 export const fetchWeather = async (location: Location): Promise<Weather> => {
@@ -127,17 +125,20 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
         { id: crypto.randomUUID(), name: "Tanie Skrzydła", type: ContractType.Airline, description: "Tania linia lotnicza szukająca nowego węzła.", terms: { moneyPerDay: 80 * airportState.gates, reputationEffect: 1, cancellationPenalty: 2 }, duration: 30 },
         { id: crypto.randomUUID(), name: "Podstawowy Dostawca Paliwa", type: ContractType.Fuel, description: "Niezawodne dostawy paliwa w standardowej cenie.", terms: { moneyPerDay: -1500, reputationEffect: 0, cancellationPenalty: 1 }, duration: 60 },
     ];
-    
+
     if (!ai) {
         console.error("Nie można wygenerować umów, Gemini AI nie zostało zainicjowane.", aiInitializationError);
         return fallbackContracts;
     }
-    
+
     const locationName = airportState.location?.name;
     if (!locationName) {
         console.error("Nie można wygenerować umów bez nazwy lokalizacji. Używam danych zapasowych.");
         return fallbackContracts;
     }
+
+    // Explicitly define a variable typed as string to avoid TS2345
+    const validLocationName: string = locationName;
 
     const prompt = `
     You are a game master for an airport management simulator. Based on the current state of the airport provided below, generate a list of 3-4 potential business contracts.
@@ -146,7 +147,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
     - 'moneyPerDay' is the daily cash flow delta. Positive for income (like an airline), negative for cost (like a premium catering service).
     - 'reputationEffect' is a one-time change to reputation upon signing.
     - 'cancellationPenalty' is a one-time reputation hit if the contract is cancelled early.
-    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${locationName!}.
+    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${validLocationName}.
     - Ensure 'type' is one of the three specified values: "Airline", "Catering", "Fuel".
     - Generate a mix of contract types.
 
@@ -154,7 +155,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
     ${JSON.stringify({ day: airportState.day, money: airportState.money, reputation: airportState.reputation, gates: airportState.gates, stands: airportState.stands })}
 
     IMPORTANT: Your response must be ONLY the raw JSON array, without any surrounding text, explanations, or markdown fences (e.g. \`\`\`json).
-  `;
+    `;
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
             const response = await ai.models.generateContent({
@@ -177,7 +178,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
             console.warn(`Attempt ${i + 1} to generate contracts failed. Retrying...`, error);
         }
     }
-    
+
     console.error("Error generating contracts after all retries. Using fallback data.");
     return fallbackContracts;
 }
@@ -196,7 +197,7 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
         console.error("Nie można wygenerować lotów, Gemini AI nie zostało zainicjowane.", aiInitializationError);
         return fallbackFlights;
     }
-    
+
     const locationName = airportState.location?.name;
     if (!locationName) {
         console.error("Nie można wygenerować lotów bez nazwy lokalizacji. Używam danych zapasowych.");
@@ -205,10 +206,13 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
 
     const flightCount = Math.max(2, Math.floor((airportState.gates * 2) + (airportState.reputation / 10)));
 
+    // Explicitly define a variable typed as string to avoid TS2345
+    const validLocationName: string = locationName;
+
     const prompt = `
     You are a flight schedule coordinator for an airport management simulator. Based on the airport's capacity and contracted airlines, create a flight schedule for the next 24 hours.
-    
-    Airport Location: ${locationName!}
+
+    Airport Location: ${validLocationName}
     Contracted Airlines:
     - ${airlineNames.join(', ')}
 
@@ -216,8 +220,8 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
     - Generate a list of exactly ${flightCount} flights.
     - The output MUST be a JSON array of flight objects with this exact structure: { "flightNumber": string, "airline": string, "type": "Arrival" | "Departure", "scheduledTime": "HH:MM", "origin": string | null, "destination": string | null }.
     - Use ONLY the airlines from the provided list.
-    - For Arrivals, the 'destination' must be '${locationName!}' and 'origin' should be a realistic city for that airline to fly from.
-    - For Departures, the 'origin' must be '${locationName!}' and 'destination' should be a realistic city for that airline to fly to.
+    - For Arrivals, the 'destination' must be '${validLocationName}' and 'origin' should be a realistic city for that airline to fly from.
+    - For Departures, the 'origin' must be '${validLocationName}' and 'destination' should be a realistic city for that airline to fly to.
     - Flight numbers should be plausible for the airline (e.g., "GA 123" for Generic Air).
     - Distribute flights throughout a 24-hour period (00:00 to 23:59), with some clustering during morning (06:00-09:00) and evening (17:00-20:00) peak hours.
     - Ensure a mix of Arrivals and Departures.
