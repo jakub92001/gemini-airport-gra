@@ -123,15 +123,22 @@ export const fetchWeather = async (location: Location): Promise<Weather> => {
 };
 
 export const generateContracts = async (airportState: AirportState): Promise<Contract[]> => {
+    const fallbackContracts = [
+        { id: crypto.randomUUID(), name: "Tanie Skrzydła", type: ContractType.Airline, description: "Tania linia lotnicza szukająca nowego węzła.", terms: { moneyPerDay: 80 * airportState.gates, reputationEffect: 1, cancellationPenalty: 2 }, duration: 30 },
+        { id: crypto.randomUUID(), name: "Podstawowy Dostawca Paliwa", type: ContractType.Fuel, description: "Niezawodne dostawy paliwa w standardowej cenie.", terms: { moneyPerDay: -1500, reputationEffect: 0, cancellationPenalty: 1 }, duration: 60 },
+    ];
+    
     if (!ai) {
         console.error("Nie można wygenerować umów, Gemini AI nie zostało zainicjowane.", aiInitializationError);
-        // Fallback contracts
-        return [
-            { id: crypto.randomUUID(), name: "Tanie Skrzydła", type: ContractType.Airline, description: "Tania linia lotnicza szukająca nowego węzła.", terms: { moneyPerDay: 80 * airportState.gates, reputationEffect: 1, cancellationPenalty: 2 }, duration: 30 },
-            { id: crypto.randomUUID(), name: "Podstawowy Dostawca Paliwa", type: ContractType.Fuel, description: "Niezawodne dostawy paliwa w standardowej cenie.", terms: { moneyPerDay: -1500, reputationEffect: 0, cancellationPenalty: 1 }, duration: 60 },
-        ];
+        return fallbackContracts;
     }
     
+    if (!airportState.location) {
+        console.error("Nie można wygenerować umów bez lokalizacji. Używam danych zapasowych.");
+        return fallbackContracts;
+    }
+
+    const locationName = airportState.location.name;
     const prompt = `
     You are a game master for an airport management simulator. Based on the current state of the airport provided below, generate a list of 3-4 potential business contracts.
     The contracts should be a JSON array with objects following this structure: { "id": string (unique UUID), "name": string, "type": "Airline" | "Catering" | "Fuel", "description": string, "terms": { "moneyPerDay": number, "reputationEffect": number, "cancellationPenalty": number }, "duration": number (in days) }.
@@ -139,7 +146,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
     - 'moneyPerDay' is the daily cash flow delta. Positive for income (like an airline), negative for cost (like a premium catering service).
     - 'reputationEffect' is a one-time change to reputation upon signing.
     - 'cancellationPenalty' is a one-time reputation hit if the contract is cancelled early.
-    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${airportState.location?.name}.
+    - Make contract terms and names appropriate for the airport's size and reputation. A small, low-reputation airport gets offers from budget airlines, while a large, prestigious one attracts major international carriers. Use real-world airline names relevant to the airport's location: ${locationName}.
     - Ensure 'type' is one of the three specified values: "Airline", "Catering", "Fuel".
     - Generate a mix of contract types.
 
@@ -172,29 +179,31 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
     }
     
     console.error("Error generating contracts after all retries. Using fallback data.");
-    // Fallback contracts
-    return [
-        { id: crypto.randomUUID(), name: "Tanie Skrzydła", type: ContractType.Airline, description: "Tania linia lotnicza szukająca nowego węzła.", terms: { moneyPerDay: 80 * airportState.gates, reputationEffect: 1, cancellationPenalty: 2 }, duration: 30 },
-        { id: crypto.randomUUID(), name: "Podstawowy Dostawca Paliwa", type: ContractType.Fuel, description: "Niezawodne dostawy paliwa w standardowej cenie.", terms: { moneyPerDay: -1500, reputationEffect: 0, cancellationPenalty: 1 }, duration: 60 },
-    ]
+    return fallbackContracts;
 }
 
 export const generateFlightsForDay = async (airportState: AirportState, activeAirlineContracts: Contract[]): Promise<Partial<Flight>[]> => {
+    const airlineNames = activeAirlineContracts.length > 0 ? activeAirlineContracts.map(c => c.name) : ["Generic Air"];
+    const fallbackLocation = "the airport";
+    const fallbackFlights = [
+        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 101`, type: FlightType.Arrival, scheduledTime: "08:30", origin: "Miasto A", destination: airportState.location?.name || fallbackLocation },
+        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 102`, type: FlightType.Departure, scheduledTime: "09:15", origin: airportState.location?.name || fallbackLocation, destination: "Miasto A" },
+        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 203`, type: FlightType.Arrival, scheduledTime: "17:00", origin: "Miasto B", destination: airportState.location?.name || fallbackLocation },
+        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 204`, type: FlightType.Departure, scheduledTime: "18:30", origin: airportState.location?.name || fallbackLocation, destination: "Miasto B" },
+    ];
+
     if (!ai) {
         console.error("Nie można wygenerować lotów, Gemini AI nie zostało zainicjowane.", aiInitializationError);
-        const airlineNames = activeAirlineContracts.length > 0 ? activeAirlineContracts.map(c => c.name) : ["Generic Air"];
-        const locationName = airportState.location?.name || 'the airport';
-        return [
-            { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 101`, type: FlightType.Arrival, scheduledTime: "08:30", origin: "Miasto A", destination: locationName },
-            { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 102`, type: FlightType.Departure, scheduledTime: "09:15", origin: locationName, destination: "Miasto A" },
-            { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 203`, type: FlightType.Arrival, scheduledTime: "17:00", origin: "Miasto B", destination: locationName },
-            { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 204`, type: FlightType.Departure, scheduledTime: "18:30", origin: locationName, destination: "Miasto B" },
-        ]
+        return fallbackFlights;
+    }
+    
+    if (!airportState.location) {
+        console.error("Nie można wygenerować lotów bez lokalizacji. Używam danych zapasowych.");
+        return fallbackFlights;
     }
 
-    const airlineNames = activeAirlineContracts.length > 0 ? activeAirlineContracts.map(c => c.name) : ["Generic Air"];
     const flightCount = Math.max(2, Math.floor((airportState.gates * 2) + (airportState.reputation / 10)));
-    const locationName = airportState.location?.name || 'the airport';
+    const locationName = airportState.location.name;
 
     const prompt = `
     You are a flight schedule coordinator for an airport management simulator. Based on the airport's capacity and contracted airlines, create a flight schedule for the next 24 hours.
@@ -238,11 +247,5 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
     }
 
     console.error("Error generating flights after all retries. Using fallback data.");
-    // Fallback flights
-    return [
-        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 101`, type: FlightType.Arrival, scheduledTime: "08:30", origin: "Miasto A", destination: locationName },
-        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 102`, type: FlightType.Departure, scheduledTime: "09:15", origin: locationName, destination: "Miasto A" },
-        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 203`, type: FlightType.Arrival, scheduledTime: "17:00", origin: "Miasto B", destination: locationName },
-        { airline: airlineNames[0], flightNumber: `${airlineNames[0].substring(0,2).toUpperCase()} 204`, type: FlightType.Departure, scheduledTime: "18:30", origin: locationName, destination: "Miasto B" },
-    ]
+    return fallbackFlights;
 };
