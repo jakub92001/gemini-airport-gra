@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
