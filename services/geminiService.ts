@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
 import { WMO_WEATHER_MAP } from "../constants";
@@ -133,8 +132,8 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
         return fallbackContracts;
     }
     
-    if (!airportState.location) {
-        console.error("Nie można wygenerować umów bez lokalizacji. Używam danych zapasowych.");
+    if (!airportState.location?.name) {
+        console.error("Nie można wygenerować umów bez nazwy lokalizacji. Używam danych zapasowych.");
         return fallbackContracts;
     }
 
@@ -197,8 +196,8 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
         return fallbackFlights;
     }
     
-    if (!airportState.location) {
-        console.error("Nie można wygenerować lotów bez lokalizacji. Używam danych zapasowych.");
+    if (!airportState.location?.name) {
+        console.error("Nie można wygenerować lotów bez nazwy lokalizacji. Używam danych zapasowych.");
         return fallbackFlights;
     }
 
