@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AirportState, UpgradeType, Contract, ContractType, Flight, VehicleType, Location, SaveData, VehicleStatus } from './types';
@@ -221,10 +218,10 @@ const App: React.FC = () => {
 
   const handleBuyVehicle = useCallback((type: VehicleType) => {
     const cost = VEHICLE_COSTS[type].cost;
-    if(gameState.money < cost) {
+    if (gameState.money < cost) {
         addToLog("Niewystarczające środki na zakup pojazdu.");
         return;
-    };
+    }
     addToLog(`Zakupiono nowy ${vehicleTypeTranslations[type]} za ${cost.toLocaleString()} $.`);
     handleUserAction(prev => ({
         ...prev,
@@ -247,7 +244,7 @@ const App: React.FC = () => {
       if (vehicleIndex === -1) {
           addToLog(`Brak dostępnego bezczynnego ${vehicleTypeTranslations[type]} do sprzedaży.`);
           return;
-      };
+      }
       addToLog(`Sprzedano ${vehicleTypeTranslations[type]} za ${sellPrice.toLocaleString()} $.`);
       handleUserAction(prev => {
           const newVehicles = [...prev.vehicles];
