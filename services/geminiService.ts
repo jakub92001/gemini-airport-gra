@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
 import { WMO_WEATHER_MAP } from "../constants";
@@ -15,8 +16,8 @@ function getApiKey(): string | null {
       apiKey = Deno.env.get("API_KEY");
     } 
     // Check for Vite/browser environment
-    else if (typeof import.meta !== 'undefined' && import.meta.env) {
-      apiKey = import.meta.env.VITE_API_KEY;
+    else if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+      apiKey = (import.meta as any).env.VITE_API_KEY;
     }
     // Check for browser/Node-like environment with process.env
     else if (typeof process !== 'undefined' && process.env) {
