@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
 import { WMO_WEATHER_MAP } from "../constants";
@@ -132,12 +133,12 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
         return fallbackContracts;
     }
     
-    if (!airportState.location?.name) {
+    const locationName = airportState.location?.name;
+    if (!locationName) {
         console.error("Nie można wygenerować umów bez nazwy lokalizacji. Używam danych zapasowych.");
         return fallbackContracts;
     }
 
-    const locationName = airportState.location.name;
     const prompt = `
     You are a game master for an airport management simulator. Based on the current state of the airport provided below, generate a list of 3-4 potential business contracts.
     The contracts should be a JSON array with objects following this structure: { "id": string (unique UUID), "name": string, "type": "Airline" | "Catering" | "Fuel", "description": string, "terms": { "moneyPerDay": number, "reputationEffect": number, "cancellationPenalty": number }, "duration": number (in days) }.
@@ -196,13 +197,13 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
         return fallbackFlights;
     }
     
-    if (!airportState.location?.name) {
+    const locationName = airportState.location?.name;
+    if (!locationName) {
         console.error("Nie można wygenerować lotów bez nazwy lokalizacji. Używam danych zapasowych.");
         return fallbackFlights;
     }
 
     const flightCount = Math.max(2, Math.floor((airportState.gates * 2) + (airportState.reputation / 10)));
-    const locationName = airportState.location.name;
 
     const prompt = `
     You are a flight schedule coordinator for an airport management simulator. Based on the airport's capacity and contracted airlines, create a flight schedule for the next 24 hours.
