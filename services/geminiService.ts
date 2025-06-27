@@ -164,7 +164,7 @@ export const generateContracts = async (airportState: AirportState): Promise<Con
                 config: {
                     responseMimeType: 'application/json',
                     temperature: 1.1,
-                }
+                };
             });
             const contractData = parseJsonFromText(response.text);
 
@@ -237,7 +237,7 @@ export const generateFlightsForDay = async (airportState: AirportState, activeAi
                 config: {
                     responseMimeType: 'application/json',
                     temperature: 0.8,
-                }
+                };
             });
             const flightData = parseJsonFromText(response.text);
 
