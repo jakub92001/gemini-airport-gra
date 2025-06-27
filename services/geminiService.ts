@@ -1,5 +1,4 @@
-
-
+/// <reference types="vite/client" />
 
 import { GoogleGenAI } from "@google/genai";
 import { AirportState, Contract, ContractType, Flight, FlightType, Location, Weather } from '../types';
@@ -16,13 +15,17 @@ function getApiKey(): string | null {
     if (typeof Deno !== 'undefined' && Deno.env && typeof Deno.env.get === 'function') {
       apiKey = Deno.env.get("API_KEY");
     } 
+    // Check for Vite/browser environment
+    else if (typeof import.meta !== 'undefined' && import.meta.env) {
+      apiKey = import.meta.env.VITE_API_KEY;
+    }
     // Check for browser/Node-like environment with process.env
     else if (typeof process !== 'undefined' && process.env) {
       apiKey = process.env.API_KEY;
     }
 
     if (!apiKey) {
-        console.warn("Klucz API Gemini nie jest skonfigurowany. Funkcje AI będą wyłączone. Ustaw API_KEY w zmiennych środowiskowych.");
+        console.warn("Klucz API Gemini nie jest skonfigurowany. Funkcje AI będą wyłączone. Ustaw VITE_API_KEY (dla klienta) lub API_KEY (dla serwera) w zmiennych środowiskowych.");
         return null;
     }
     return apiKey;
